@@ -1,1 +1,24 @@
+0.1.0
+====
+Added:
+----
+
+Changed:
+----
+
+Removed:
+----
+
+To-Do:
+----
+- Rename :setState to :gotoState.
+- Test inheritance (https://github.com/kikito/stateful.lua/blob/master/spec/acceptance_spec.lua#L64)
+- Error if state is already set? (I don't like this, so I won't do it)
+- Error if state given is nil.
+
+- Add :pushState.
+- Add :enteredState and :exitedState.
+- Add :popAllStates
+- Add :getStateStackDebugInfo
+
 0.0.1: Initial Release
