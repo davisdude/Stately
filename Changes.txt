@@ -5,20 +5,21 @@ Added:
 
 Changed:
 ----
+- Renamed :setState to :pushState.
 
 Removed:
 ----
 
 To-Do:
 ----
-- Rename :setState to :gotoState.
 - Test inheritance (https://github.com/kikito/stateful.lua/blob/master/spec/acceptance_spec.lua#L64)
 - Error if state is already set? (I don't like this, so I won't do it)
 - Error if state given is nil.
 
-- Add :pushState.
 - Add :enteredState and :exitedState.
 - Add :popAllStates
 - Add :getStateStackDebugInfo
+
+- Make the __tostring method work.
 
 0.0.1: Initial Release

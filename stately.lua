@@ -16,8 +16,8 @@ local function checkInit( class ) -- Set up table only once.
 	if not rawget( class, '__inited' ) then add__methods( class ) end
 end
 
-local function _setstate( class, state, ... ) -- Default class.setState function. 
-	checkInit( class )
+local function _pushstate( class, state, ... ) -- Default class.setState function. 
+	-- checkInit( class )
 	
 	local previous = class.__stateStack[#class.__stateStack]
 	if type( state ) == 'string' then 
@@ -27,7 +27,7 @@ local function _setstate( class, state, ... ) -- Default class.setState function
 end
 
 local function _popstate( class ) -- Default class.popState function.
-	checkInit( class )
+	-- checkInit( class )
 	
 	local state = class.__stateStack[#class.__stateStack]
 	assert( state, 'State Error: Attempt to pop state of class with no remaining states.' )
@@ -35,16 +35,18 @@ local function _popstate( class ) -- Default class.popState function.
 end
 
 local function _getstate( class, name ) -- Default class.getClass function.
-	checkInit( class )
+	if type( name ) == 'string' then
+		-- checkInit( class )
 	
-	for index, value in pairs( class.__states ) do
-		if index == name then return value end
+		for index, value in pairs( class.__states ) do
+			if index == name then return value end
+		end
+		return nil
 	end
-	return nil
 end
 
 local function _removestate( class, name ) -- Default class.removeState function.
-	checkInit( class )
+	-- checkInit( class )
 	
 	class.__states[name] = nil
 	local pattern = string.format( '<State: %s>', name )
@@ -54,10 +56,20 @@ local function _removestate( class, name ) -- Default class.removeState function
 	end
 end
 
+local function _popallstates( class ) -- Default class.popAllStates function.
+end
+
+local function _gotostate( class, state ) -- Default class.gotoState function.
+	class:popAllStates()
+	state = class:getState( state )
+end
+
 local function prepareTable( class ) -- Prepares the table for the "state infrastructure."
 	checkInit( class )
 	
-	class.setState = class.setState or _setstate
+	class.popAllStates = class.popAllStates or _popallstates
+	class.gotoState = class.gotoState or _gotostate
+	class.pushState = class.pushState or _pushstate
 	class.popState = class.popState or _popstate
 	class.getState = class.getState or _getstate
 	class.removeState = class.removeState or _removestate
