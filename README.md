@@ -2,7 +2,9 @@ Stately
 ====
 
 A library based off of Kikito's awesome library [stateful](https://github.com/kikito/stateful.lua), but uses rxi's class library [classic](https://github.com/rxi/classic).
+
 Note: I currently do NOT have all of the library's features integrated (e.g. :popAll(), etc.), but I plan on doing so.
+This is still very much a work in progress. Read as: NOT TESTED ENOUGH. Please help test if you can!
 
 ##Usage
 Usage is simple and easy.
@@ -37,7 +39,7 @@ return Car
 ```lua
 -- main.lua
 Car = require 'Source.Car'
-Car:setState( 'Running' ) -- This gives all the cars a default state of 'running'
+Car:pushState( 'Running' ) -- This gives all the cars a default state of 'running'
 
 function love.load()
 	Cars = {
@@ -54,7 +56,7 @@ function love.load()
 		print'---'
 	end
 	
-	Cars.Honda:setState( 'Broken' )
+	Cars.Honda:pushState( 'Broken' )
 	printCars()
 	--[[ Output:
 		I am a broken car named "Honda"! :(
