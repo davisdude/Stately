@@ -8,7 +8,7 @@ local function add__methods( class ) -- Make sure table is set up properly
 	class.__states = class.__states or {}
 	
 	for index = #previous, 1, -1 do -- Add inheritance from parents.
-		table.insert( class.__stateStack, previous[index] )
+		table.insert( class.__stateStack, 1, previous[index] )
 	end
 end
 
@@ -18,16 +18,21 @@ end
 
 local function _pushstate( class, state, ... ) -- Default class.setState function. 
 	local previous = class.__stateStack[#class.__stateStack]
-	if type( state ) == 'string' then 
-		state = class:getState( state )
-	end
-	class.__stateStack[#class.__stateStack + 1] = state
+	state = class:getState( state )
+	
+	if previous then previous:exitedState( state ) end
+	state:enteredState( previous )
+	
+	table.insert( class.__stateStack, state )
 end
 
 local function _popstate( class ) -- Default class.popState function.
 	local state = class.__stateStack[#class.__stateStack]
 	assert( state, 'State Error: Attempt to pop state of class with no remaining states.' )
-	class.__stateStack[#class.__stateStack] = nil
+	
+	local length = #class.__stateStack
+	class.__stateStack[length].exitedState( class.__stateStack[length], class.__stateStack[length - 1] )
+	table.remove( class.__stateStack, #class.__stateStack )
 end
 
 local function _getstate( class, name ) -- Default class.getClass function.
@@ -77,7 +82,33 @@ end
 local function newState( class, name ) -- Creates the framework for the state being added.
 	local new = class:extend( name, true, 'State' )
 	prepareTable( class )
+	
+	new.enteredState = function() end
+	new.exitedState = function() end
+	
 	return new
+end
+
+local function defaultMt( mt, index, call )
+	return { 
+		__index = index, 
+		__call = call, 
+		
+		__newindex = mt.__newindex, 
+		__tostring = mt.__tostring, 
+		__gc = mt.__gc, 
+		__concat = mt.__concat, 
+		
+		__unm = mt.__unm, 
+		__add = mt.__add, 
+		__sub = mt.__sub, 
+		__mul = mt.__mul, 
+		__div = mt.__div, 
+		__pow = mt.__pow, 
+		__eq = mt.__eq, 
+		__lt = mt.__lt, 
+		__le = mt.__le, 
+	}
 end
 
 function State.addState( class, name ) -- Adds a new state to the class.
@@ -95,7 +126,8 @@ function State.addState( class, name ) -- Adds a new state to the class.
 		for i, v in pairs( class ) do
 			if index == i then return v end
 		end
-		return ( ( type( mt.__index ) == 'function' ) and mt.__index( class, index ) ) or ( ( type( mt.__index ) == 'table' ) and mt.__index[index] )
+		return ( ( type( mt.__index ) == 'function' ) and mt.__index( class, index ) ) 
+		    or ( ( type( mt.__index ) == 'table' ) and mt.__index[index] )
 	end
 	
 	local oldCall = class.__call
@@ -103,18 +135,14 @@ function State.addState( class, name ) -- Adds a new state to the class.
 		function class.__call( _, ... )
 			local new = oldCall( _, ... )
 			prepareTable( new )
-			return setmetatable( new, {
-					__index = _index, 
-					__tostring = class.__tostring 
-				} 
-			)
+			return setmetatable( new, defaultMt( mt, _index ) )
 		end 
 	end
 	checkInit( class )
 	
 	local new = newState( class, name )
 	class.__states[name] = new
-	setmetatable( class, { __index = _index, __call = oldCall, __tostring = class.__tostring } )
+	setmetatable( class, defaultMt( mt, _index, oldCall ) )
 	
 	return new
 end
