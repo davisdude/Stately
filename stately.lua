@@ -81,26 +81,25 @@ local function newState( class, name ) -- Creates the framework for the state be
 end
 
 function State.addState( class, name ) -- Adds a new state to the class.
-	if not checkInit( class ) then		
-		local mt = getmetatable( class )
-		
-		local _index = function( tab, index )
-			-- First look through currently implemented class.
-			if rawget( tab, '__stateStack' ) and #tab.__stateStack > 0 then
-				for i, v in pairs( tab.__stateStack[#tab.__stateStack] ) do -- Look through the currently active state only.
-					if index == i then return v end
-				end
-			end
-			for i, v in pairs( tab ) do 
+	local mt = getmetatable( class )
+	local _index = function( tab, index )
+		-- First look through currently implemented class.
+		if rawget( tab, '__stateStack' ) and #tab.__stateStack > 0 then
+			for i, v in pairs( tab.__stateStack[#tab.__stateStack] ) do -- Look through the currently active state only.
 				if index == i then return v end
 			end
-			for i, v in pairs( class ) do
-				if index == i then return v end
-			end
-			return ( ( type( mt.__index ) == 'function' ) and mt.__index( class, index ) ) or ( ( type( mt.__index ) == 'table' ) and mt.__index[index] )
 		end
-		
-		local oldCall = class.__call
+		for i, v in pairs( tab ) do 
+			if index == i then return v end
+		end
+		for i, v in pairs( class ) do
+			if index == i then return v end
+		end
+		return ( ( type( mt.__index ) == 'function' ) and mt.__index( class, index ) ) or ( ( type( mt.__index ) == 'table' ) and mt.__index[index] )
+	end
+	
+	local oldCall = class.__call
+	if not checkInit( class ) then
 		function class.__call( _, ... )
 			local new = oldCall( _, ... )
 			prepareTable( new )
@@ -115,6 +114,7 @@ function State.addState( class, name ) -- Adds a new state to the class.
 	
 	local new = newState( class, name )
 	class.__states[name] = new
+	setmetatable( class, { __index = _index, __call = oldCall, __tostring = class.__tostring } )
 	
 	return new
 end

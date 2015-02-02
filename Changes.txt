@@ -22,5 +22,6 @@ To-Do:
 - Add :getStateStackDebugInfo
 
 - Make the __tostring method work.
+- Make extensions of extensions work.
 
 0.0.1: Initial Release
