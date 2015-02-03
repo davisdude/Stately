@@ -31,7 +31,7 @@ local function _popstate( class ) -- Default class.popState function.
 	assert( state, 'State Error: Attempt to pop state of class with no remaining states.' )
 	
 	local length = #class.__stateStack
-	class.__stateStack[length].exitedState( class.__stateStack[length], class.__stateStack[length - 1] )
+	class.__stateStack[length]:exitedState( class.__stateStack[length - 1] )
 	table.remove( class.__stateStack, #class.__stateStack )
 end
 
