@@ -19,8 +19,10 @@ end
 local function _pushstate( class, state, ... ) -- Default class.setState function. 
 	local previous = class.__stateStack[#class.__stateStack]
 	state = class:getState( state )
+	assert( state, 'State Error: Attempt to non-existant state!' )
 	
 	if previous then previous:exitedState( state ) end
+	assert( not ( tostring( previous ) == tostring( state ) ), 'State Error: Attempt to set state already set!' )
 	state:enteredState( previous )
 	
 	table.insert( class.__stateStack, state )
@@ -31,7 +33,7 @@ local function _popstate( class ) -- Default class.popState function.
 	assert( state, 'State Error: Attempt to pop state of class with no remaining states.' )
 	
 	local length = #class.__stateStack
-	class.__stateStack[length]:exitedState( class.__stateStack[length - 1] )
+	class.__stateStack[length].exitedState( class.__stateStack[length], class.__stateStack[length - 1] )
 	table.remove( class.__stateStack, #class.__stateStack )
 end
 
@@ -40,7 +42,7 @@ local function _getstate( class, name ) -- Default class.getClass function.
 		for index, value in pairs( class.__states ) do
 			if index == name then return value end
 		end
-		return nil
+		error( 'State Error: Attempt to get non-existant state!' )
 	elseif tostring( name ):find( '<State:' ) == 1 then
 		return name
 	end
@@ -57,7 +59,7 @@ end
 
 local function _popallstates( class ) -- Default class.popAllStates function.
 	for index = #class.__stateStack, 1, -1 do
-		-- class.__stateStack[index]:exitedState()
+		class.__stateStack[index]:exitedState()
 		class.__stateStack[index] = nil
 	end
 end
@@ -65,6 +67,7 @@ end
 local function _gotostate( class, state ) -- Default class.gotoState function.
 	class:popAllStates()
 	state = class:getState( state )
+	assert( state, 'State Error: Attempt to goto non-existant state!' )
 	class.__stateStack[#class.__stateStack + 1] = state
 end
 
