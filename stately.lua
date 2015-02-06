@@ -1,5 +1,3 @@
-local State = {}
-
 local function add__methods( class ) -- Make sure table is set up properly
 	local previous = class.super.__stateStack or {}
 	
@@ -33,7 +31,7 @@ local function _popstate( class ) -- Default class.popState function.
 	assert( state, 'State Error: Attempt to pop state of class with no remaining states.' )
 	
 	local length = #class.__stateStack
-	class.__stateStack[length].exitedState( class.__stateStack[length], class.__stateStack[length - 1] )
+	class.__stateStack[length]:exitedState( class.__stateStack[length - 1] )
 	table.remove( class.__stateStack, #class.__stateStack )
 end
 
@@ -64,7 +62,7 @@ local function _popallstates( class ) -- Default class.popAllStates function.
 	end
 end
 
-local function _gotostate( class, state ) -- Default class.gotoState function.
+local function _gotostate( class, state ) -- Default class.gotoState function. 
 	class:popAllStates()
 	state = class:getState( state )
 	assert( state, 'State Error: Attempt to goto non-existant state!' )
@@ -114,40 +112,46 @@ local function defaultMt( mt, index, call )
 	}
 end
 
-function State.addState( class, name ) -- Adds a new state to the class.
-	local mt = getmetatable( class )
-	local _index = function( tab, index )
-		-- First look through currently implemented class.
-		if rawget( tab, '__stateStack' ) and #tab.__stateStack > 0 then
-			for i, v in pairs( tab.__stateStack[#tab.__stateStack] ) do -- Look through the currently active state only.
+return { 
+	addState = function( class, name, inheritance ) -- Adds a new state to the class.	
+		local mt = getmetatable( class )
+		local _index = function( tab, index )
+			-- First look through currently implemented class.
+			if rawget( tab, '__stateStack' ) and #tab.__stateStack > 0 then
+				for i, v in pairs( tab.__stateStack[#tab.__stateStack] ) do -- Look through the currently active state only.
+					if index == i then return v end
+				end
+			end
+			for i, v in pairs( tab ) do 
 				if index == i then return v end
 			end
+			for i, v in pairs( class ) do
+				if index == i then return v end
+			end
+			return ( ( type( mt.__index ) == 'function' ) and mt.__index( class, index ) ) 
+				or ( ( type( mt.__index ) == 'table' ) and mt.__index[index] )
 		end
-		for i, v in pairs( tab ) do 
-			if index == i then return v end
+		
+		local oldCall = class.__call
+		if not checkInit( class ) then
+			function class.__call( _, ... )
+				local new = oldCall( _, ... )
+				prepareTable( new )
+				return setmetatable( new, defaultMt( mt, _index ) )
+			end 
 		end
-		for i, v in pairs( class ) do
-			if index == i then return v end
+		checkInit( class )
+		
+		local new = newState( class, name )
+		inheritance = ( type( inheritance == 'table' ) and inheritance ) or ( type( inheritance ) == 'string' and class:getState( inheritance ) ) or {}
+		
+		for index, value in pairs( inheritance ) do
+			if not rawget( new, index ) then new[index] = value end
 		end
-		return ( ( type( mt.__index ) == 'function' ) and mt.__index( class, index ) ) 
-		    or ( ( type( mt.__index ) == 'table' ) and mt.__index[index] )
+		
+		class.__states[name] = new
+		setmetatable( class, defaultMt( mt, _index, oldCall ) )
+		
+		return new
 	end
-	
-	local oldCall = class.__call
-	if not checkInit( class ) then
-		function class.__call( _, ... )
-			local new = oldCall( _, ... )
-			prepareTable( new )
-			return setmetatable( new, defaultMt( mt, _index ) )
-		end 
-	end
-	checkInit( class )
-	
-	local new = newState( class, name )
-	class.__states[name] = new
-	setmetatable( class, defaultMt( mt, _index, oldCall ) )
-	
-	return new
-end
-
-return State
+}

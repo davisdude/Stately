@@ -2,26 +2,26 @@
 ====
 Added:
 ----
-- Added :popAllStates
+- Added 	:popAllStates
+- Added 	:enteredState and :exitedState.
+- Added		Inheritance for states.
 
 Changed:
 ----
 - Renamed 	:setState to :pushState.
 - Fixed 	:extend and other class-related inheritance bugs.
-- "Fixed" 	Extensions of extensions (there was never actually a problem :|). 
-- Added 	:enteredState and :exitedState. 
+- "Fixed" 	Extensions of extensions (there was never actually a problem :|).  
 - Changed	Errors if state is already set.
+- Changed	Errors if state set is nil.
 
 Removed:
 ----
 
 To-Do:
 ----
-- Test inheritance (https://github.com/kikito/stateful.lua/blob/master/spec/acceptance_spec.lua#L64)
-- Error if state given is nil.
+- Test inheritance for states.
 - Add :getStateStackDebugInfo
 
 - Make the __tostring method work.
-- Make extensions of extensions work.
 
 0.0.1: Initial Release
