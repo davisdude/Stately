@@ -10,7 +10,8 @@ Changed:
 ----
 - Renamed 	:setState to :pushState.
 - Fixed 	:extend and other class-related inheritance bugs.
-- "Fixed" 	Extensions of extensions (there was never actually a problem :|).  
+- "Fixed" 	Extensions of extensions (there was never actually a problem :|).
+- Fixed		:exitedClass, etc.
 - Changed	Errors if state is already set.
 - Changed	Errors if state set is nil.
 
@@ -21,7 +22,6 @@ To-Do:
 ----
 - Test inheritance for states.
 - Add :getStateStackDebugInfo
-
-- Make the __tostring method work.
+- Add :pausedState, :continuedState; etc.
 
 0.0.1: Initial Release

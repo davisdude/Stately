@@ -1,17 +1,27 @@
+local function isState( state ) -- Check if class submitted is a state.
+	if tostring( state ):find( '<State:' ) == 1 then return true end
+	return false
+end
+
 local function add__methods( class ) -- Make sure table is set up properly
 	local previous = class.super.__stateStack or {}
 	
 	class.__inited = true
 	class.__stateStack = rawget( class, '__stateStack' ) or {}	
 	class.__states = class.__states or {}
+	class.__currentState = nil
 	
 	for index = #previous, 1, -1 do -- Add inheritance from parents.
 		table.insert( class.__stateStack, 1, previous[index] )
 	end
 end
 
-local function checkInit( class ) -- Set up table only once.
-	if not rawget( class, '__inited' ) then add__methods( class ) else return true end
+local function checkInit( class )
+	if not rawget( class, '__inited' ) then return false else return true end
+end
+
+local function format( class ) -- Set up table only once.
+	if not checkInit( class ) then add__methods( class ); return false else return true end
 end
 
 local function _pushstate( class, state, ... ) -- Default class.setState function. 
@@ -19,20 +29,42 @@ local function _pushstate( class, state, ... ) -- Default class.setState functio
 	state = class:getState( state )
 	assert( state, 'State Error: Attempt to non-existant state!' )
 	
-	if previous then previous:exitedState( state ) end
+	if previous then previous.exitedState( class ) end
 	assert( not ( tostring( previous ) == tostring( state ) ), 'State Error: Attempt to set state already set!' )
 	state:enteredState( previous )
+	class.__currentState = state
 	
 	table.insert( class.__stateStack, state )
 end
 
-local function _popstate( class ) -- Default class.popState function.
+local function _popstate( class, name ) -- Default class.popState function.
+	local index = #class.__stateStack
+	name = class:getState( name )
+	if name then
+		for i = #class.__stateStack, 1, -1 do
+			if class.__stateStack[i] == name then
+				index = i
+				break
+			end
+		end
+	end
+
 	local state = class.__stateStack[#class.__stateStack]
 	assert( state, 'State Error: Attempt to pop state of class with no remaining states.' )
 	
-	local length = #class.__stateStack
-	class.__stateStack[length]:exitedState( class.__stateStack[length - 1] )
-	table.remove( class.__stateStack, #class.__stateStack )
+	class.__stateStack[index].exitedState( class )
+	table.remove( class.__stateStack, index )
+	
+	local current = #class.__stateStack
+	while not class.__stateStack[current] do
+		current = current - 1
+	end
+	class.__currentState = class.__stateStack[current]
+end
+
+local function _getStateName( state ) -- Gets the string version of the state name.
+	-- <State: asdfa;lkj;lkja;dslkfj>
+	return tostring( state ):sub( 9, -2 )
 end
 
 local function _getstate( class, name ) -- Default class.getClass function.
@@ -41,7 +73,7 @@ local function _getstate( class, name ) -- Default class.getClass function.
 			if index == name then return value end
 		end
 		error( 'State Error: Attempt to get non-existant state!' )
-	elseif tostring( name ):find( '<State:' ) == 1 then
+	elseif isState( name ) then
 		return name
 	end
 end
@@ -57,20 +89,25 @@ end
 
 local function _popallstates( class ) -- Default class.popAllStates function.
 	for index = #class.__stateStack, 1, -1 do
-		class.__stateStack[index]:exitedState()
+		class.__stateStack[index].exitedState( class )
 		class.__stateStack[index] = nil
 	end
+	class.__currentState = nil
 end
 
 local function _gotostate( class, state ) -- Default class.gotoState function. 
 	class:popAllStates()
+
 	state = class:getState( state )
 	assert( state, 'State Error: Attempt to goto non-existant state!' )
+	state.enteredState( class, class.__stateStack[#class.__stateStack] )
+	
 	class.__stateStack[#class.__stateStack + 1] = state
+	class.__currentState = state
 end
 
 local function prepareTable( class ) -- Prepares the table for the "state infrastructure."
-	checkInit( class )
+	format( class )
 	
 	class.popAllStates = class.popAllStates or _popallstates
 	class.gotoState = class.gotoState or _gotostate
@@ -90,10 +127,10 @@ local function newState( class, name ) -- Creates the framework for the state be
 	return new
 end
 
-local function defaultMt( mt, index, call )
-	return { 
-		__index = index, 
-		__call = call, 
+local function defaultMt( mt, index, custom )
+	local tab = { 
+		__index = index or mt.__index, 
+		__call = mt.__call, 
 		
 		__newindex = mt.__newindex, 
 		__tostring = mt.__tostring, 
@@ -110,16 +147,23 @@ local function defaultMt( mt, index, call )
 		__lt = mt.__lt, 
 		__le = mt.__le, 
 	}
+	for i, v in pairs( custom ) do
+		tab[i] = v
+	end
+	return tab
 end
 
-return { 
-	addState = function( class, name, inheritance ) -- Adds a new state to the class.	
+return {
+	addState = function( class, name, inheritance ) -- Adds a new state to the class.
 		local mt = getmetatable( class )
-		local _index = function( tab, index )
+		
+		local function _index( tab, index )
 			-- First look through currently implemented class.
-			if rawget( tab, '__stateStack' ) and #tab.__stateStack > 0 then
-				for i, v in pairs( tab.__stateStack[#tab.__stateStack] ) do -- Look through the currently active state only.
-					if index == i then return v end
+			if rawget( tab, '__stateStack' ) and #tab.__stateStack > 0 and ( index ~= 'enteredState' and index ~= 'exitedState' ) then
+				for state = #tab.__stateStack, 1, -1 do
+					for i, v in pairs( tab.__stateStack[state] ) do -- Look through the currently active state only.
+						if index == i then return v end
+					end
 				end
 			end
 			for i, v in pairs( tab ) do 
@@ -131,27 +175,45 @@ return {
 			return ( ( type( mt.__index ) == 'function' ) and mt.__index( class, index ) ) 
 				or ( ( type( mt.__index ) == 'table' ) and mt.__index[index] )
 		end
+		local function _tostring( class )
+			return string.format( '<%s: %s - State: %s>', class.super.__prefix, class.super.__type, _getStateName( class.__currentState ) )
+		end
 		
 		local oldCall = class.__call
+		local oldTostring = class.__tostring
+		local newCall
+		
 		if not checkInit( class ) then
-			function class.__call( _, ... )
+			newCall = function( _, ... )
 				local new = oldCall( _, ... )
 				prepareTable( new )
-				return setmetatable( new, defaultMt( mt, _index ) )
+				
+				new.__index = _index
+				new.__tostring = _tostring
+				new.__index = _index
+				return setmetatable( new, defaultMt( mt, _index, { __tostring = _tostring } ) )
 			end 
+			
+			class.__call = newCall
+			class.__tostring = oldTostring
+			class.__index = _index
+			setmetatable( class, defaultMt( mt, _index, { __call = newCall, __tostring = oldTostring } ) )
 		end
-		checkInit( class )
 		
 		local new = newState( class, name )
-		inheritance = ( type( inheritance == 'table' ) and inheritance ) or ( type( inheritance ) == 'string' and class:getState( inheritance ) ) or {}
-		
-		for index, value in pairs( inheritance ) do
-			if not rawget( new, index ) then new[index] = value end
-		end
 		
 		class.__states[name] = new
-		setmetatable( class, defaultMt( mt, _index, oldCall ) )
+		
+		if inheritance then
+			if type( inheritance ) == 'string' and not checkInit( class.super ) then
+				error( 'State Error: Attempt to give inheritance to a class with no parent!' )
+			end
+			inheritance = class.super:getState( inheritance )
+			for index, value in pairs( inheritance ) do
+				if not rawget( new, index ) then new[index] = value end
+			end
+		end
 		
 		return new
-	end
+	end, 
 }
