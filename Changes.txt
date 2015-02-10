@@ -5,6 +5,11 @@ Added:
 - Added 	:popAllStates
 - Added 	:enteredState and :exitedState.
 - Added		Inheritance for states.
+- Added		:pausedState, :continuedState; etc.
+- Added		:getStateStackDebugInfo
+- Added		Specs. Runs exactly like Stateful's specs.
+
+- Added 	Differences to README.md
 
 Changed:
 ----
@@ -20,8 +25,6 @@ Removed:
 
 To-Do:
 ----
-- Test inheritance for states.
-- Add :getStateStackDebugInfo
-- Add :pausedState, :continuedState; etc.
+- Document variables that it adds to tables.
 
 0.0.1: Initial Release
