@@ -111,6 +111,9 @@ Person:getStateStackDebugInfo()
 ```
 - `State:addState` does _not_ error when you try to add a new state. Stateful will error if you try to add a state that the class already has. Stately will *not*.
 
+##Requirements
+Make sure you are using Lua 5.2 and this slightly modified version of [classic](https://github.com/davisdude/Stately/tree/master/Tests/classic.lua)..
+
 ##License
 A state library made in Lua
 Copyright (C) 2015 Davis Claiborne
