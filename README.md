@@ -88,24 +88,7 @@ end
 ```
 
 ##Differences
-There are some minor differences in the implementations of Stateful vs. Stately
-- `State:getStateStackDebugInfo` returns the states in the reverse order when compared to Stateful.
-```lua
-local Guy = Class:extend( 'Guy' )
-Guy:implement( State )
-
-local Happy = Guy:addState( 'Happy' )
-local Sad = Guy:addState( 'Sad' )
-
-local Person = Guy()
-Person:pushState( 'Happy' )
-Person:pushState( Sad ) -- Either style works, as long as you are in the same context of the state (if the state is local).
-Person:getStateStackDebugInfo() 
--- [[ Output: (table)
-	<State: Happy>
-	<State: Sad>
-]] 
-```
+- All `State:callback` (i.e. `enteredState`, etc.) functions __are__ accessible. 
 - `State:addState` does _not_ error when you try to add a new state. Stateful will error if you try to add a state that the class already has. Stately will *not*.
 
 ##Requirements
