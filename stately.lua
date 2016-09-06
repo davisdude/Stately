@@ -66,7 +66,7 @@ local State = {
 		return class.states[name]
 	end,
 	gotoState = function( class, state, ... )
-		class:popAllStates()
+		class:popAllStates( ... )
 		if not state then
 			class.__stateStack = {}
 		else
@@ -76,19 +76,19 @@ local State = {
 			invokeCallback( class, newState, 'enteredState', ... )
 		end
 	end,
-	pushState = function( class, state )
+	pushState = function( class, state, ... )
 		validateState( class.states, state )
 
 		local oldState = getCurrentState( class )
-		invokeCallback( class, oldState, 'pausedState' )
+		invokeCallback( class, oldState, 'pausedState', ... )
 
 		local newState = class.states[state] or state
 		table.insert( class.__stateStack, newState )
 
-		invokeCallback( class, newState, 'pushedState' )
-		invokeCallback( class, newState, 'enteredState' )
+		invokeCallback( class, newState, 'pushedState', ... )
+		invokeCallback( class, newState, 'enteredState', ... )
 	end,
-	popState = function( class, state )
+	popState = function( class, state, ... )
 		if state then validateState( class.states, state ) end
 		local oldIndex = getStateIndexFromStack( class, state )
 		local oldState
@@ -96,21 +96,21 @@ local State = {
 		if oldIndex then
 			oldState = class.__stateStack[oldIndex]
 
-			invokeCallback( class, oldState, 'poppedState' )
-			invokeCallback( class, oldState, 'exitedState' )
+			invokeCallback( class, oldState, 'poppedState', ... )
+			invokeCallback( class, oldState, 'exitedState', ... )
 
 			table.remove( class.__stateStack, oldIndex )
 		end
 
 		local newState = getCurrentState( class )
 		if oldState ~= newState then
-			invokeCallback( class, newState, 'continuedState' )
+			invokeCallback( class, newState, 'continuedState', ... )
 		end
 	end,
-	popAllStates = function( class )
+	popAllStates = function( class, ... )
 		local size = #class.__stateStack
 		for i = 1, size do
-			class:popState()
+			class:popState( nil, ... )
 		end
 	end,
 	getStateStackDebugInfo = function( class )
@@ -152,8 +152,7 @@ return setmetatable( State, { __call = function( _, Classic )
 	Classic.__call = function( self, ... )
 		local obj = setmetatable( {}, {
 			__index = function( tab, i )
-				if superState[i] then return nil end
-				return test( protocols[self], tab, i )
+				return ( not superState[i] ) and test( protocols[self], tab, i ) or nil
 			end
 		} )
 		obj:new( ... )

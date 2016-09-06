@@ -93,15 +93,15 @@ context( 'Stately unit spec', function()
 				assert_true( e.mark )
 			end )
 			test( 'Passes all additional arguments to `:enteredState` and `:exitedState`', function()
-				local FooEnemy = Enemy:addState( 'FooEnemy' )
-				local testValue = 'Bar'
+				local State1 = Enemy:addState( 'State1' )
+				local State2 = Enemy:addState( 'State2' )
 
-				local function validateArgs( _, ... ) assert_equal( ..., testValue ) end
-				FooEnemy.enteredState = validateArgs
-				FooEnemy.exitedState = validateArgs
+				State1.exitedState = function( self, x ) assert_equal( x, 'foobar' ) end
+				State2.enteredState = function( self, x ) assert_equal( x, 'foobar' ) end
 
 				local e = Enemy()
-				e:gotoState( 'FooEnemy', testValue )
+				e:gotoState( 'State1' )
+				e:gotoState( 'State2', 'foobar' )
 			end )
 			context( 'Accepts state objects', function()
 				test( 'Basic Case', function()

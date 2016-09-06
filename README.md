@@ -1,7 +1,7 @@
 # Stately
 
 * This is intended to be [stateful] but for [classic].
-* There are some minor differences between Stateful and [stateful].
+* There are some minor differences between __stately__ and [stateful].
 
 # Table of Contents
 
@@ -82,70 +82,79 @@ There are some minor differences between __stately__ and [stateful]:
 #### State:enteredState
 
 * `function State:enteredState( ... ) end`
-	* This callback is invoked by [Class:gotoState[(#classgotostate) (if the state to go to is defined) and [Class:pushState](#classpushstate). You can define this function, but you should not be calling this function, it is used internally.
+	* This callback is invoked by [Class:gotoState[(#classgotostate) (if the state to go to is defined) and [Class:pushState](#classpushstate). You can define this function, but cannot call it; it is used internally.
 	* `State`: `State`. A state object.
-	* `...`: varargs. Whatever is passed to [Class:gotoState](#classgotostate) (but __not__ [Class:pushState](#classpushstate)).
+	* `...`: varargs. Whatever is passed to [Class:gotoState](#classgotostate) or [Class:pushState](#classpushstate).
 
 #### State:exitedState
 
-* `function State:exitedState() end`
-	* This callback is invoked by [Class:popState](#classpopstate) (which itself is invoked by [Class:gotoState](#classgotostate) and [Class:popAllStates](#classpopallstates)). You can define this function, but you should not be calling this function, it is used internally.
+* `function State:exitedState( ... ) end`
+	* This callback is invoked by [Class:popState](#classpopstate) (which itself is invoked by [Class:gotoState](#classgotostate) and [Class:popAllStates](#classpopallstates)). You can define this function, but cannot call it; it is used internally.
 	* `State`: `State`. A state object.
+	* `...`: varargs. Whatever is passed to [Class:popState](#classpopstate) or [Class:gotoState](#classgotostate) and [Class:popState](#classpopstate).
 
 #### State:pushedState
 
-* `function State:pushedState() end`
-	* This callback is invoked by [Class:pushState](#classpushstate). You can define this function, but you should not be calling this function, it is used internally.
+* `function State:pushedState( ... ) end`
+	* This callback is invoked by [Class:pushState](#classpushstate). You can define this function, but cannot call it; it is used internally.
 	* `State`: `State`. A state object.
+	* `...`: varargs. Whatever is passed to [Class:pushState](#classpushstate).
 
 #### State:poppedState
 
-* `function State:poppedState() end`
-	* This callback is invoked by [Class:popState](#classpopstate) (which itself is invoked by [Class:gotoState](#classgotostate) and [Class:popAllStates](#classpopallstates)) . You can define this function, but you should not be calling this function, it is used internally.
+* `function State:poppedState( ... ) end`
+	* This callback is invoked by [Class:popState](#classpopstate) (which itself is invoked by [Class:gotoState](#classgotostate) and [Class:popAllStates](#classpopallstates)) . You can define this function, but cannot call it; it is used internally.
 	* `State`: `State`. A state object.
+	* `...`: varargs. Whatever is passed to [Class:popState](#classpopstate) and [Class:popAllStates](#classpopallstates).
 
 #### State:pausedState
 
-* `function State:pausedState() end`
-	* This callback is invoked by [Class:pushstate](#classpushstate). You can define this function, but you should not be calling this function, it is used internally.
+* `function State:pausedState( ... ) end`
+	* This callback is invoked by [Class:pushstate](#classpushstate). You can define this function, but cannot call it; it is used internally.
 	* `State`: `State`. A state object.
+	* `...`: varargs. Whatever is passed to [Class:pushState](#classpushstate).
 
 #### State:continuedState
 
-* `function State:continuedState() end`
-	* This callback is invoked by [Class:popState](#classpopstate) (which itself is invoked by [Class:gotoState](#classgotostate) and [Class:popAllStates](#classpopallstates)) . You can define this function, but you should not be calling this function, it is used internally.
+* `function State:continuedState( ... ) end`
+	* This callback is invoked by [Class:popState](#classpopstate) (which itself is invoked by [Class:gotoState](#classgotostate) and [Class:popAllStates](#classpopallstates)). You can define this function, but cannot call it; it is used internally.
 	* `State`: `State`. A state object.
+	* `...`: varargs. Whatever is passed to [Class:popState](#classpopstate) or [Class:gotoState](#classgotostate) and [Class:popState](#classpopstate).
 
 ### Class:gotoState
 
-* `Class:gotoState( State )`
+* `Class:gotoState( State, ... )`
 	* [Flushes](#classpopallstates) the current state stack and sets the state.
 	* `State`: `nil`, string, `State`.
 		* `nil`: Go to the default of the class, with no state set.
 		* string: Go to the state of that name.
 		* `State`: Go to that state object.
+	* `...`: variables. Data top be passed to any of the other `Class` functions.
 
 ### Class:pushState
 
-* `Class:pushState( State )`
+* `Class:pushState( State, ... )`
 	* Pushes a new state to the stack.
 	* `State`: string, `State`.
 		* string: Push the state by that particular name to the stack.
 		* `State`: Push that state to the stack.
+	* `...`: variables. Data top be passed to any of the other `Class` functions.
 
 ### Class:popState
 
-* `Class:popState( State )`
+* `Class:popState( State, ... )`
 	* Pops a specific state from the stack.
 	* `State`: `nil`, string, `State`.
 		* `nil`: Pop the last state in the stack.
 		* string: Pop the last state in the stack with that particular name.
 		* `State`: Pop the last occurrence of that state in the stack.
+	* `...`: variables. Data top be passed to any of the other `Class` functions.
 
 ### Class:popAllStates
 
-* `Class:popAllStates()`
+* `Class:popAllStates( ... )`
 	* Flushes the state stack, [popping](#classpopstate) each class in order as it does so.
+	* `...`: variables. Data top be passed to any of the other `Class` functions.
 
 ### Class:getStateStackDebugInfo
 
