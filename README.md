@@ -67,6 +67,7 @@ There are some minor differences between __stately__ and [stateful]:
 
 * [Class:getStateStackDebugInfo](#classgetstatestackdebuginfo) returns the statestack in the order it is, instead of reversed. In other words, the first [pushed](#classpushstate) state would be the first table item, the second would be the second, etc.
 * [Class:gotoState](#classgotostate), [Class:pushState](#classpushstate), and [Class:popState](#classpopstate) all accept the state table return by [Class:addState](#classaddstate) as well as the string used to identify it.
+* There is no need to `:implement` like with [stateful]; instead, you need to pass the table returned by Classic when you `require` it (see [Installation](#installation) for more).
 
 # Functions
 
@@ -156,7 +157,7 @@ There are some minor differences between __stately__ and [stateful]:
 
 This project uses [telescope] for the specifications. To run, make sure you can run Lua via the command line.
 Next, within the spec folder, clone in [telescope], then clone in [classic] inside of the folder holding [telescope].
-Copy the files [acceptance_spec.lua](blob/spec/acceptance_spec.lua) and [unit_spec.lua](blob/spec/unit_spec.lua) to that same folder.
+Copy the files [acceptance_spec.lua](spec/acceptance_spec.lua) and [unit_spec.lua](spec/unit_spec.lua) to that same folder.
 Finally, test each file with the command `lua tsc -f <name.lua>`.
 
 I've automated it with the following file:
