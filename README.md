@@ -1,111 +1,189 @@
-Stately
-====
+# Stateful
 
-A library based off of Kikito's awesome library [stateful](https://github.com/kikito/stateful.lua), but uses rxi's class library [classic](https://github.com/rxi/classic).
+* This is intended to be [stateful] but for [classic].
+* There are some minor differences between Stateful and [stateful].
 
-##Usage
-Usage is simple and easy.
+# Table of Contents
+
+* [Example](#example)
+* [Installation](#installation)
+* [Differences](#differences)
+* [Functions](#functions)
+* [Specs](#specs)
+
+# Example
+
 ```lua
--- Car.lua
-local Class = require 'Utilities.classic'
-local State = require 'Utilities.stately'
+local Class = require 'classic.classic'
+local State = require 'stately' ( Class )
 
-local Car = Class:extend( 'Car' )
-Car:implement( State ) -- This gives the class the ability to use Stately's functions.
+local Enemy = Class:extend()
 
-function Car:new( name ) 
-	self.name = name
+function Enemy:new( health )
+	self.health = health
 end
 
-function Car:stop() print( 'Stopping the car!' ) end
-function Car:speak() print( string.format( 'I am a car named "%s!"', self.name ) ) end
-function Car:crash() print( 'This is an example of a fallback. Only the main class has this.' ) end
-
-local Running = Car:addState( 'Running' ) -- Add a new state like so.
-function Running:speak() print( string.format( 'I am a running car named "%s!"', self.name ) ) end
-function Running:stop() print( 'STOP STOP STOP!' ) end
-
-local Broken = Car:addState( 'Broken' )
-function Broken:speak() print( string.format( 'I am a broken car name "%s!" :(', self.name ) ) end
-function Broken:stop() print( 'I am broken and therefore already stopped...' ) end
-
--- Note that none of the states have a :crash() function. Stately supports fallbacks.
-
-return Car
-```
-```lua
--- main.lua
-Car = require 'Source.Car'
-Car:pushState( 'Running' ) -- This gives all the cars a default state of 'running'
-
-function love.load()
-	Cars = {
-		-- Create your cars.
-		Honda = Car( 'Honda' ), 
-		Chevy = Car( 'Chevy' ), 
-		Ford = Car( 'Ford' ), 
-	}
-	
-	local function printCars()
-		for _, v in pairs( Cars ) do
-			v:speak()
-		end
-		print'---'
-	end
-	
-	Cars.Honda:pushState( 'Broken' )
-	printCars()
-	--[[ Output:
-		I am a broken car named "Honda"! :(
-		I am a running car named "Chevy"!
-		I am a running car named "Ford"!
-	]]
-	
-	Cars.Honda:popState() -- You can exit the last state by popping.
-	printCars()
-	--[[ Output:
-		I am a running car named "Honda"!
-		I am a running car named "Chevy"!
-		I am a running car named "Ford"!
-	]]
-	
-	Cars.Honda:popState() 
-	printCars()
-	--[[ Output:
-		I am a car named "Honda"!
-		I am a running car named "Chevy"!
-		I am a running car named "Ford"!
-	]]
-	for _, v in pairs( Cars ) do
-		v:crash()
-	end
-	--[[ Output:
-		This is an example of a fallback. Only the main class has this.
-		This is an example of a fallback. Only the main class has this.
-		This is an example of a fallback. Only the main class has this.
-	]]
+function Enemy:speak()
+	return 'My health is ' .. tostring( self.health )
 end
+
+local Immortal = Enemy:addState( 'Immortal' )
+
+-- Overridden function
+function Immortal:speak()
+	return 'I am UNBREAKABLE!!'
+end
+
+-- Added function
+function Immortal:die()
+	return 'I cannot die now!'
+end
+
+local peter = Enemy( 10 )
+peter:speak() -- My health is 10
+peter:gotoState( 'Immortal' )
+peter:speak() -- I am UNBREAKABLE!!
+peter:die() -- I cannot die now!
+peter:gotoState() -- Go to default state when nil is passed
+peter:speak() -- My health is 10
+peter:die() -- Error - not a function
 ```
 
-##Differences
-- All `State:callback` (i.e. `enteredState`, etc.) functions __are__ accessible. 
-- `State:addState` does _not_ error when you try to add a new state. Stateful will error if you try to add a state that the class already has. Stately will *not*.
+# Installation
 
-##Requirements
-Make sure you are using Lua 5.2 and this slightly modified version of [classic](https://github.com/davisdude/Stately/tree/master/Tests/classic.lua)..
+You need a copy of [classic] in your project. Then, download this repo and put it in that folder, too.
 
-##License
-A state library made in Lua
-Copyright (C) 2015 Davis Claiborne
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-Contact me at davisclaib at gmail.com
+To use it, simply require it.
+
+```lua
+local Class = require 'path.to.classic'
+-- Make sure to pass the table of classic when you require stately.
+local State = require 'path.to.stately' ( Class )
+```
+
+# Differences
+
+There are some minor differences between __stately__ and [stateful]:
+
+* [Class:getStateStackDebugInfo](#classgetstatestackdebuginfo) returns the statestack in the order it is, instead of reversed. In other words, the first [pushed](#classpushstate) state would be the first table item, the second would be the second, etc.
+* [Class:gotoState](#classgotostate), [Class:pushState](#classpushstate), and [Class:popState](#classpopstate) all accept the state table return by [Class:addState](#classaddstate) as well as the string used to identify it.
+
+# Functions
+
+### Class:addState
+
+* `State = Class:addState( name, parent )`
+	* Adds a new state to the class.
+	* `name`: string. The name of the state.
+	* `parent`: `nil` or `State`. The parent class that this state should inherit.
+	* `State`: `State`. The state of the class.
+
+#### State:enteredState
+
+* `function State:enteredState( ... ) end`
+	* This callback is invoked by [Class:gotoState[(#classgotostate) (if the state to go to is defined) and [Class:pushState](#classpushstate). You can define this function, but you should not be calling this function, it is used internally.
+	* `State`: `State`. A state object.
+	* `...`: varargs. Whatever is passed to [Class:gotoState](#classgotostate) (but __not__ [Class:pushState](#classpushstate)).
+
+#### State:exitedState
+
+* `function State:exitedState() end`
+	* This callback is invoked by [Class:popState](#classpopstate) (which itself is invoked by [Class:gotoState](#classgotostate) and [Class:popAllStates](#classpopallstates)). You can define this function, but you should not be calling this function, it is used internally.
+	* `State`: `State`. A state object.
+
+#### State:pushedState
+
+* `function State:pushedState() end`
+	* This callback is invoked by [Class:pushState](#classpushstate). You can define this function, but you should not be calling this function, it is used internally.
+	* `State`: `State`. A state object.
+
+#### State:poppedState
+
+* `function State:poppedState() end`
+	* This callback is invoked by [Class:popState](#classpopstate) (which itself is invoked by [Class:gotoState](#classgotostate) and [Class:popAllStates](#classpopallstates)) . You can define this function, but you should not be calling this function, it is used internally.
+	* `State`: `State`. A state object.
+
+#### State:pausedState
+
+* `function State:pausedState() end`
+	* This callback is invoked by [Class:pushstate](#classpushstate). You can define this function, but you should not be calling this function, it is used internally.
+	* `State`: `State`. A state object.
+
+#### State:continuedState
+
+* `function State:continuedState() end`
+	* This callback is invoked by [Class:popState](#classpopstate) (which itself is invoked by [Class:gotoState](#classgotostate) and [Class:popAllStates](#classpopallstates)) . You can define this function, but you should not be calling this function, it is used internally.
+	* `State`: `State`. A state object.
+
+### Class:gotoState
+
+* `Class:gotoState( State )`
+	* [Flushes](#classpopallstates) the current state stack and sets the state.
+	* `State`: `nil`, string, `State`.
+		* `nil`: Go to the default of the class, with no state set.
+		* string: Go to the state of that name.
+		* `State`: Go to that state object.
+
+### Class:pushState
+
+* `Class:pushState( State )`
+	* Pushes a new state to the stack.
+	* `State`: string, `State`.
+		* string: Push the state by that particular name to the stack.
+		* `State`: Push that state to the stack.
+
+### Class:popState
+
+* `Class:popState( State )`
+	* Pops a specific state from the stack.
+	* `State`: `nil`, string, `State`.
+		* `nil`: Pop the last state in the stack.
+		* string: Pop the last state in the stack with that particular name.
+		* `State`: Pop the last occurrence of that state in the stack.
+
+### Class:popAllStates
+
+* `Class:popAllStates()`
+	* Flushes the state stack, [popping](#classpopstate) each class in order as it does so.
+
+### Class:getStateStackDebugInfo
+
+* `info = Class:getStateStackDebugInfo()`
+	* Gets the names of the states in the stack in the order they were pushed.
+	* `info`: table. Contains the names of all the states in the order they were pushed.
+
+# Specs
+
+This project uses [telescope] for the specifications. To run, make sure you can run Lua via the command line.
+Next, within the spec folder, clone in [telescope], then clone in [classic] inside of the folder holding [telescope].
+Copy the files [acceptance_spec.lua](blob/spec/acceptance_spec.lua) and [unit_spec.lua](blob/spec/unit_spec.lua) to that same folder.
+Finally, test each file with the command `lua tsc -f <name.lua>`.
+
+I've automated it with the following file:
+
+```batch
+@echo off
+cd %~dp0
+
+git clone https://github.com/norman/telescope
+copy * telescope
+copy ..\stately.lua telescope\stately.lua
+
+pushd telescope
+
+git clone https://github.com/rxi/classic
+
+lua tsc -f acceptance_spec.lua
+pause
+
+lua tsc -f unit_spec.lua
+pause
+
+popd
+
+rmdir /s /q telescope
+```
+
+[stateful]: https://github.com/kikito/stateful.lua
+[classic]: https://github.com/rxi/classic
+[telescope]: https://github.com/norman/telescope
