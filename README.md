@@ -61,11 +61,12 @@ local Class = require 'path.to.classic'
 local State = require 'path.to.stately' ( Class )
 ```
 
+Be __SURE__ to require `classic` _before_ `stately`.
+
 # Differences
 
 There are some minor differences between __stately__ and [stateful]:
 
-* [Class:getStateStackDebugInfo](#classgetstatestackdebuginfo) returns the statestack in the order it is, instead of reversed. In other words, the first [pushed](#classpushstate) state would be the first table item, the second would be the second, etc.
 * [Class:gotoState](#classgotostate), [Class:pushState](#classpushstate), and [Class:popState](#classpopstate) all accept the state table return by [Class:addState](#classaddstate) as well as the string used to identify it.
 * There is no need to `:implement` like with [stateful]; instead, you need to pass the table returned by Classic when you `require` it (see [Installation](#installation) for more).
 
