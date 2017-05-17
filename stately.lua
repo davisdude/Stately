@@ -195,6 +195,7 @@ return setmetatable( State, { __call = function( _, Classic )
 			end
 		} )
 		obj:new( ... )
+		obj.__stateStack = {}
 		return obj
 	end
 end } )

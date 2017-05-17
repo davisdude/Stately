@@ -195,6 +195,27 @@ popd
 rmdir /s /q telescope
 ```
 
+Alternatively, if you already have [telescope] and [classic] installed in the same directory as stately, the following should work:
+
+```batch
+@echo off
+pushd %~dp0\..\..\telescope
+
+set p="..\Stately"
+
+copy %p%\spec\"*.lua" > nul
+copy %p%\stately.lua > nul
+if not exist classic mkdir classic
+copy "..\classic\classic.lua" "classic\classic.lua" > nul
+
+for %%f in (%p%\spec\"*lua") do cmd /c "lua -e "package.path = './?.lua;' .. package.path" tsc -f "%%~nxf" & pause"
+
+for %%f in (%p%\spec\*.lua) do del "%%~nxf"
+del Stately.lua
+rmdir /s /q classic
+popd
+```
+
 [stateful]: https://github.com/kikito/stateful.lua
 [classic]: https://github.com/rxi/classic
 [telescope]: https://github.com/norman/telescope
