@@ -68,8 +68,8 @@ local function assertStringOrState( var )
 end
 
 local function assertClassHasState( class, state )
-	state = getStateName( class, state )
-	assert( class.states[state], 'Invalid state: State "' .. tostring( state ) .. '" does not exist in the class.' )
+	local newState = getStateName( class, state )
+	assert( class.states[newState], 'Invalid state: State "' .. tostring( state ) .. '" does not exist in the class.' )
 end
 
 local function copy( t )
