@@ -145,13 +145,12 @@ local State = {
 	end,
 	popAllStates = function( class, ... )
 		local size = #class.__stateStack
-		for i = 1, size do
+		for _ = 1, size do
 			class:popState( nil, ... )
 		end
 	end,
 	getStateStackDebugInfo = function( class )
 		local info = {}
-		local state
 		for i = #class.__stateStack, 1, -1 do
 			local name = getStateName( class, class.__stateStack[i] )
 			table.insert( info, name )
@@ -181,7 +180,7 @@ return setmetatable( State, { __call = function( _, Classic )
 				end
 			end,
 			function( c, i ) return rawget( c, i ) end,
-			function( c, i ) return class[i] end,
+			function( _, i ) return class[i] end,
 		}
 
 		return class
