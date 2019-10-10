@@ -193,8 +193,8 @@ return setmetatable( State, { __call = function( _, Classic )
 				return test( protocols[self], tab, i )
 			end
 		} )
-		obj:new( ... )
 		obj.__stateStack = {}
+		obj:new( ... )
 		return obj
 	end
 end } )
